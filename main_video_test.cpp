@@ -58,8 +58,9 @@ void text_update(OsdCore *osd_p, int lvl, int lives, int lvlx, int lvly, int lif
 	osd_p->wr_char(lifex + 7, lifey, (char)(lives) + '0');	// 1
 }
 
-void gamestate(OsdCore *osd_p, int stage)
+void gamestate(OsdCore *osd_p, Ps2Core *ps2_p, int stage)
 {
+	osd_p->clr_screen();
 	switch (stage)
 	{
 		case 0:
@@ -67,9 +68,6 @@ void gamestate(OsdCore *osd_p, int stage)
 				int gvx = 34, gvy = 15;
 				osd_p->write(gvx, gvy, "   Frogger Flakes");
 				osd_p->write(gvx, gvy, "Press Space to begin!");
-				
-				// spawn two frogs, allow them to change color
-				
 				break;
 			}
 
@@ -129,7 +127,7 @@ void jump(char cmd, int frogx, int frogy, int jumpdist, DupliCore *frog_p) {
 	sleep_ms(50);
 	for (int i = 0; i < 4; i++) { frog_p->move_xy(-1, -1, i);	}
 
-	frog_p->move_xy(frogx, frogy, sdir); // land-jump, I don't know why 'frogx' needs -5, it glitches without it
+	frog_p->move_xy(frogx, frogy, sdir); // land-jump
 }
 
 void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *turtle_p, SpriteCore *dance_p,
@@ -146,14 +144,12 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 	int lifex = 195, lifey = 1;
 	
 	int sc = 20; // sc: spawn count
-	int tbnd, lbnd, bbnd, rbnd; 		// top/left/bot/right boundaries
-	int frogx[2], frogy[2];		 	// player 1 & player 2
+	int tbnd = 0, lbnd = 0, bbnd = 479, rbnd = 639; 	// top/left/bot/right boundaries
+	int frogx[n_frog], frogy[n_frog];		 			// player 1 & player 2
 	int carx[sc], cary[sc], logx[sc], logy[sc], turtlex[sc], turtley[sc];
 	int rate[sc][6];
 	int log_spd = 20;
 
-	lbnd = 0;	rbnd = 639;	tbnd = 0;	bbnd = 479;
-	frogx = 320;	frogy = 200;
 	x1 = rbnd;	y1 = 200;	r1 = -log_spd;
 	x2 = lbnd;	y2 = 200;	r2 = +log_spd + 3;
 	x3 = rbnd;	y3 = 400;	r3 = -log_spd - 7;
@@ -172,25 +168,53 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 	osd_p->bypass(0);
 
 	// Initialize frog sprites
-	for (int i = 0; i <= 3; i++) { frog_p->set_color_dir(0, i, i); }	// apply default color to all frog sprites
+// 	for (int i = 0; i <= 3; i++) { frog_p->set_color_dir(0, i, i); }	// apply default color to all frog sprites
 	frog_p->bypass(0);
 
+	int n_frog = 2;
+	int color_frog[n_frog];
 	
+	gamestate(osd_p, ps2_p, 0);
 	while (true)
 	{
-		gamestate(osd_p, 0);
 		if (ps2_p->get_kb_ch(&ch))
 		{
-			if (ch == ' ')
-			{
-				lives = 5;
-				break;
+			// spawn two frogs, allow them to change color
+			// '1', '2' frogs, 'Space' to start
+			frogx[0] = (ch == '2') (int) rbnd/3 : (int) rbnd/2;
+			frogx[1] = (ch == '2') (int) rbnd*2/3 : (int) -1;
+			
+			if (n_frog == 1) {
+				if (ch == 'w') color_frog[0] = 0; if (ch == 'a') color_frog[0] = 1;
+				if (ch == 's') color_frog[0] = 2; if (ch == 'd') color_frog[0] = 3;	
+			} 
+			if (n_frog == 2) {
+				if (ch == '8') color_frog[1] = 0; if (ch == '4') color_frog[1] = 1;
+				if (ch == '5') color_frog[1] = 2; if (ch == '6') color_frog[1] = 3;
+			}			
+			if (n_frog == 3) {
+				if (ch == '  8') color_frog[2] = 0; if (ch == '  4') color_frog[2] = 1;
+				if (ch == '  5') color_frog[2] = 2; if (ch == '  6') color_frog[2] = 3;
 			}
+			if (n_frog == 4) {
+				if (ch == 'i') color_frog[3] = 0; if (ch == 'j') color_frog[3] = 1;
+				if (ch == 'k') color_frog[3] = 2; if (ch == 'l') color_frog[3] = 3;
+			}
+			for (int i = 0; i < n_frog; i++) { 
+				int j = (i % 2 == 0) ? 0 ; 1
+					
+				// Change frog[i]'s color, animate L/R direction, choose frog[i]
+				frog_p->set_color_dir(color_frog[i], j, i); sleep_ms(100); 				
+				frog_p->set_color_dir(color_frog[i], j + 1, i); sleep_ms(100);
+				
+				frog_p->move_xy(frogx[x], bbnd / 2 + 20, i);
+			}
+			
+			if (ch == ' ') break;
 		}
 	}
 
-	osd_p->clr_screen();
-	gamestate(osd_p, 1);
+	gamestate(osd_p, ps2_p, 1);
 
 
 	do {
@@ -267,7 +291,7 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 	osd_p->clr_screen();
 	while (true)
 	{
-		gamestate(osd_p, 2);
+		gamestate(osd_p, ps2_p, 2);
 		if (ps2_p->get_kb_ch(&ch))
 		{
 			if (ch == ' ')
