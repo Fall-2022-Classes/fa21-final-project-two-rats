@@ -65,9 +65,10 @@ void gamestate(OsdCore *osd_p, Ps2Core *ps2_p, int stage)
 	{
 		case 0:
 			{
-				int gvx = 34, gvy = 15;
+				int gvx = 34, gvy = 13;
 				osd_p->write(gvx, gvy, "   Frogger Flakes");
-				osd_p->write(gvx, gvy, "Press Space to begin!");
+				osd_p->write(gvx, gvy+1, "Choose up to 4 players");
+				osd_p->write(gvx, gvy+5, "Press Space to begin!");
 				break;
 			}
 
@@ -134,7 +135,7 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 		Ps2Core *ps2_p, XadcCore *adc_p, OsdCore *osd_p)
 {
 	// Universal init variables
-	unsigned int time = 0, cooldown = 0;
+	unsigned int time = 0;
 	static unsigned int lives = 5;	
 	int jumpdist = 20;
 	int level;
@@ -142,6 +143,10 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 	bool safe1, safe2, safe3;
 	int lvlx = 0, lvly = 1;
 	int lifex = 195, lifey = 1;
+	
+	static char n_frog = '1';
+	static int i_frog = n_frog - '0';
+	int color_frog[n_frog];
 	
 	int sc = 20; // sc: spawn count
 	int tbnd = 0, lbnd = 0, bbnd = 479, rbnd = 639; 	// top/left/bot/right boundaries
@@ -168,20 +173,16 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 	osd_p->bypass(0);
 
 	// Initialize frog sprites
-// 	for (int i = 0; i <= 3; i++) { frog_p->set_color_dir(0, i, i); }	// apply default color to all frog sprites
 	frog_p->bypass(0);
 
-	static char n_frog = '1';
-	static int i_frog = n_frog - '0';
-	int color_frog[n_frog];
 	
+	// TITLE SCREEN
 	gamestate(osd_p, ps2_p, 0);
 	while (true)
 	{
 		if (ps2_p->get_kb_ch(&ch))
 		{
-			// spawn two frogs, allow them to change color
-			// '1', '2' frogs, 'Space' to start
+			// Spawn up to 4 frogs, allow them to change color. '1', '2' frogs, 'Space' to start
 			// Despawn all frogs, update n_frog based on input key, then set x-coor for new frogs
 			for (int i = 0; i < i_frog; i++) { frog_p->move_xy(-1, -1, i); } 
 			n_frog = ch; i_frog = n_frog - '0';
@@ -195,7 +196,7 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 				if (ch == '8') color_frog[1] = 0; if (ch == '4') color_frog[1] = 1;
 				if (ch == '5') color_frog[1] = 2; if (ch == '6') color_frog[1] = 3;
 			}			
-			if (n_frog == '3') {
+			if (n_frog == '3') { 								// CHECK
 				if (ch == '  8') color_frog[2] = 0; if (ch == '  4') color_frog[2] = 1;
 				if (ch == '  5') color_frog[2] = 2; if (ch == '  6') color_frog[2] = 3;
 			}
@@ -204,18 +205,15 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 				if (ch == 'k') color_frog[3] = 2; if (ch == 'l') color_frog[3] = 3;
 			}
 			
-			cooldown = now_ms();
-			if (now_ms() - time >= 300) {
-				ani_sw = true;
-				time = cooldown;
-			}
+			int dir = 0, ani = 0;
 			for (int i = 0; i < i_frog; i++) { 
-				int j = (i % 2 == 0) ? 0 ; 1
-					
-				// Change frog[i]'s color, animate L/R direction, choose frog[i]
-				frog_p->set_color_dir(color_frog[i], j, i); sleep_ms(100); 				
-				frog_p->set_color_dir(color_frog[i], j + 1, i); sleep_ms(100);
-				
+				dir = (i % 2 == 0) ? 0 : 1;
+				if (now_ms() - time >= 300) {
+					ani = !ani;
+					time = now_ms();
+				}
+				// Change frog[i]'s color, choose L/R direction & jump every 300ms, choose frog[i]
+				frog_p->set_color_dir(color_frog[i], dir + ani, i);  
 				frog_p->move_xy(frogx[i], bbnd / 2 + 20, i);
 			}
 			
@@ -223,9 +221,8 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 		}
 	}
 
+	// GAME STAGE
 	gamestate(osd_p, ps2_p, 1);
-
-
 	do {
 		if (lives == 0) break;
 		else text_update(osd_p, level, lives, lvlx, lvly, lifex, lifey);
@@ -233,20 +230,19 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 		xadc = adc_p->read_adc_in(0);
 		speed = map(0.0, 1.0, 10, 200, xadc);
 
-		if ((prev_adc - xadc) > 0.1 || (prev_adc - xadc) < -0.1)
-		{
+		if ((prev_adc - xadc) > 0.1 || (prev_adc - xadc) < -0.1) {
 			prev_adc = xadc;
 			level = map(10, 200, 10, 1, speed);
 		}
 
-					speed = 100;	// debug
+		speed = 100;	// debug
 
 		if (ps2_p->get_kb_ch(&ch))
 		{
-			if (ch == 'w' || ch == 'W') frogy = frogy - jumpdist;
-			if (ch == 'a' || ch == 'A') frogx = frogx - jumpdist;
-			if (ch == 's' || ch == 'S') frogy = frogy + jumpdist;
-			if (ch == 'd' || ch == 'D') frogx = frogx + jumpdist;
+			if (ch == 'w') frogy = frogy - jumpdist;
+			if (ch == 'a') frogx = frogx - jumpdist;
+			if (ch == 's') frogy = frogy + jumpdist;
+			if (ch == 'd') frogx = frogx + jumpdist;
 
 			jump(ch, frogx, frogy, jumpdist, frog_p);
 
@@ -255,10 +251,9 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 		}
 		
 		
-//		cooldown = now_ms();
-//		if (cooldown - time >= speed)
+//		if (now_ms() - time >= speed)
 //		{
-//			time = cooldown;
+//			time = now_ms();
 //
 //			safe1 = collided(x1, y1, 16, 16, frogx, frogy, 16, 16);
 //			safe2 = collided(x2, y2, 16, 16, frogx, frogy, 16, 16);
@@ -296,15 +291,12 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 
 	} while (true);
 	
-
-	osd_p->clr_screen();
-	while (true)
-	{
-		gamestate(osd_p, ps2_p, 2);
-		if (ps2_p->get_kb_ch(&ch))
-		{
-			if (ch == ' ')
-			{
+	
+	// GAME OVER SCREEN
+	gamestate(osd_p, ps2_p, 2);
+	while (true) {
+		if (ps2_p->get_kb_ch(&ch)) {
+			if (ch == ' ') {
 				lives = 5;
 				break;
 			}
@@ -430,7 +422,7 @@ int main() {
 	while (1) {
 
       //sleep_ms(3000);
-      sprites_demo(&frog, &car, &log, &turtle, &dance);
+      //sprites_demo(&frog, &car, &log, &turtle, &dance);
       frogger(&frog, &car, &log, &turtle, &dance, &ps2, &adc, &osd);
 
    } // while
