@@ -220,7 +220,49 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 			if (frogy < 350) water_arena = true;
 			else water_arena = false;
 		}
+		
+		
+//		cooldown = now_ms();
+//		if (cooldown - time >= speed)
+//		{
+//			time = cooldown;
+//
+//			safe1 = collided(x1, y1, 16, 16, frogx, frogy, 16, 16);
+//			safe2 = collided(x2, y2, 16, 16, frogx, frogy, 16, 16);
+//			safe3 = collided(x3, y3, 16, 16, frogx, frogy, 16, 16);
+//
+//			if ((safe1 || safe2 || safe3) and!on_log)
+//			{
+//				crashed(ghost_p, frogx, frogy);
+//				frogx = 320;
+//				frogy = 450;
+//				lives -= 1;
+//			}
+//			else
+//			{
+//				if (safe1) frogx = frogx + r1;
+//				if (safe2) frogx = frogx + r2;
+//				if (safe3) frogx = frogx + r3;
+//
+//				if (frogx < lbnd) frogx = lbnd;
+//				if (frogx > rbnd) frogx = rbnd;
+//			}
+//
+//			if (x1 < lbnd) x1 = rbnd;
+//			else x1 = x1 + r1;
+//			if (x2 > rbnd) x2 = lbnd;
+//			else x2 = x2 + r2;
+//			if (x3 < lbnd) x3 = rbnd;
+//			else x3 = x3 + r3;
+//		}
+
+//		ghost_p->move_xy(frogx, frogy, 0);
+//		ghost_p->move_xy(x1, y1, 1);
+//		ghost_p->move_xy(x2, y2, 2);
+//		ghost_p->move_xy(x3, y3, 3);
+
 	} while (true);
+	
 
 	osd_p->clr_screen();
 	while (true)
