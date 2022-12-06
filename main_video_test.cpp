@@ -150,14 +150,15 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 	
 	int sc = 20; // sc: spawn count
 	int tbnd = 0, lbnd = 0, bbnd = 479, rbnd = 639; 	// top/left/bot/right boundaries
-	int frogx[n_frog], frogy[n_frog];		 			// player 1 & player 2
-	int carx[sc], cary[sc], logx[sc], logy[sc], turtlex[sc], turtley[sc];
+	int frogx[n_frog], frogy[n_frog];		 	// player 1 & player 2
+	int car[sc][2], log[sc][2], turtle[sc][2];	// 2D array[x][y]: x = # of sprites, y = coordinates
+	
 	int rate[sc][6];
-	int log_spd = 20;
-
-	x1 = rbnd;	y1 = 200;	r1 = -log_spd;
-	x2 = lbnd;	y2 = 200;	r2 = +log_spd + 3;
-	x3 = rbnd;	y3 = 400;	r3 = -log_spd - 7;
+	int incr = 5;
+	int row[10] = {-incr, +incr + 2, -incr, +incr+9};
+	row[0] = -incr;
+	int row2 = +log_spd + 3;
+	int row3 = -log_spd - 7;
 
 	// Ps2
 	char ch;
