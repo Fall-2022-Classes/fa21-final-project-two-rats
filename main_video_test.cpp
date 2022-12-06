@@ -65,7 +65,11 @@ void gamestate(OsdCore *osd_p, int stage)
 		case 0:
 			{
 				int gvx = 34, gvy = 15;
-				osd_p->write(gvx, gvy, "Frosty Flakes");
+				osd_p->write(gvx, gvy, "   Frogger Flakes");
+				osd_p->write(gvx, gvy, "Press Space to begin!");
+				
+				// spawn two frogs, allow them to change color
+				
 				break;
 			}
 
@@ -83,7 +87,7 @@ void gamestate(OsdCore *osd_p, int stage)
 			{
 				int gvx = 34, gvy = 15;
 				osd_p->write(gvx, gvy, "Game Over!");
-				osd_p->write(gvx, gvy+1, "Press Space to continue!");
+				osd_p->write(gvx, gvy+1, "Press Space to retry!");
 				break;
 			}
 	}
@@ -131,28 +135,47 @@ void jump(char cmd, int frogx, int frogy, int jumpdist, DupliCore *frog_p) {
 void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *turtle_p, SpriteCore *dance_p,
 		Ps2Core *ps2_p, XadcCore *adc_p, OsdCore *osd_p)
 {
-	frog_p->set_color_dir(0,0,0);	// apply default color & direction 0 on frog sprite 0
-	frog_p->set_color_dir(0,1,1);
-	frog_p->set_color_dir(0,2,2);
-	frog_p->set_color_dir(0,3,3);
-
-
-	unsigned int time = 0;
-	unsigned int cooldown;
-	static unsigned int lives = 5;
-
-	// Ps2
-	int id;
-	char ch;
-
-	// enable OSD text sprite
-	osd_p->set_color(0xfff, 0x000);	// dark gray/green
-	osd_p->bypass(0);
-	osd_p->clr_screen();
-
+	// Universal init variables
+	unsigned int time = 0, cooldown = 0;
+	static unsigned int lives = 5;	
+	int jumpdist = 20;
+	int level;
+	bool water_arena = false;
+	bool safe1, safe2, safe3;
 	int lvlx = 0, lvly = 1;
 	int lifex = 195, lifey = 1;
+	
+	int sc = 20; // sc: spawn count
+	int tbnd, lbnd, bbnd, rbnd; 		// top/left/bot/right boundaries
+	int frogx[2], frogy[2];		 	// player 1 & player 2
+	int carx[sc], cary[sc], logx[sc], logy[sc], turtlex[sc], turtley[sc];
+	int rate[sc][6];
+	int log_spd = 20;
 
+	lbnd = 0;	rbnd = 639;	tbnd = 0;	bbnd = 479;
+	frogx = 320;	frogy = 200;
+	x1 = rbnd;	y1 = 200;	r1 = -log_spd;
+	x2 = lbnd;	y2 = 200;	r2 = +log_spd + 3;
+	x3 = rbnd;	y3 = 400;	r3 = -log_spd - 7;
+
+	// Ps2
+	char ch;
+	
+	// XADC
+	static double prev_adc = -1.0;
+	double xadc;
+	int speed = 100;
+
+	// Initialize OSD text sprite
+	osd_p->clr_screen();
+	osd_p->set_color(0xfff, 0x000);	// dark gray/green
+	osd_p->bypass(0);
+
+	// Initialize frog sprites
+	for (int i = 0; i <= 3; i++) { frog_p->set_color_dir(0, i, i); }	// apply default color to all frog sprites
+	frog_p->bypass(0);
+
+	
 	while (true)
 	{
 		gamestate(osd_p, 0);
@@ -169,27 +192,6 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 	osd_p->clr_screen();
 	gamestate(osd_p, 1);
 
-	// enable ghost sprites
-	int frogx, frogy, x1, y1, x2, y2, x3, y3, r1, r2, r3, tbnd, lbnd, bbnd, rbnd;
-	int log_spd = 20;
-	frog_p->bypass(0);
-
-	lbnd = 0;	rbnd = 639;	tbnd = 0;	bbnd = 479;
-	frogx = 320;	frogy = 200;
-	x1 = rbnd;	y1 = 200;	r1 = -log_spd;
-	x2 = lbnd;	y2 = 200;	r2 = +log_spd + 3;
-	x3 = rbnd;	y3 = 400;	r3 = -log_spd - 7;
-
-	// XADC
-	double xadc;
-	static double prev_adc = -1.0;
-	int speed = 100;
-
-	// universal: collision detection
-	int jumpdist = 20;
-	int level;
-	bool on_log = false;
-	bool safe1, safe2, safe3;
 
 	do {
 		if (lives == 0) break;
@@ -215,8 +217,8 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 
 			jump(ch, frogx, frogy, jumpdist, frog_p);
 
-			if (frogy < 350) on_log = true;
-			else on_log = false;
+			if (frogy < 350) water_arena = true;
+			else water_arena = false;
 		}
 	} while (true);
 
