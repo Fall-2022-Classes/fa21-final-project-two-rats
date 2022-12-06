@@ -171,7 +171,8 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 // 	for (int i = 0; i <= 3; i++) { frog_p->set_color_dir(0, i, i); }	// apply default color to all frog sprites
 	frog_p->bypass(0);
 
-	int n_frog = 2;
+	static char n_frog = '1';
+	static int i_frog = n_frog - '0';
 	int color_frog[n_frog];
 	
 	gamestate(osd_p, ps2_p, 0);
@@ -181,33 +182,41 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 		{
 			// spawn two frogs, allow them to change color
 			// '1', '2' frogs, 'Space' to start
-			frogx[0] = (ch == '2') (int) rbnd/3 : (int) rbnd/2;
-			frogx[1] = (ch == '2') (int) rbnd*2/3 : (int) -1;
+			// Despawn all frogs, update n_frog based on input key, then set x-coor for new frogs
+			for (int i = 0; i < i_frog; i++) { frog_p->move_xy(-1, -1, i); } 
+			n_frog = ch; i_frog = n_frog - '0';
+			for (int i = 0; i < i_frog; i++) { frogx[i] = (int) rbnd * (i + 1) / (i_frog + 1); }
 			
-			if (n_frog == 1) {
+			if (n_frog == '1') {
 				if (ch == 'w') color_frog[0] = 0; if (ch == 'a') color_frog[0] = 1;
 				if (ch == 's') color_frog[0] = 2; if (ch == 'd') color_frog[0] = 3;	
 			} 
-			if (n_frog == 2) {
+			if (n_frog == '2') {
 				if (ch == '8') color_frog[1] = 0; if (ch == '4') color_frog[1] = 1;
 				if (ch == '5') color_frog[1] = 2; if (ch == '6') color_frog[1] = 3;
 			}			
-			if (n_frog == 3) {
+			if (n_frog == '3') {
 				if (ch == '  8') color_frog[2] = 0; if (ch == '  4') color_frog[2] = 1;
 				if (ch == '  5') color_frog[2] = 2; if (ch == '  6') color_frog[2] = 3;
 			}
-			if (n_frog == 4) {
+			if (n_frog == '4') {
 				if (ch == 'i') color_frog[3] = 0; if (ch == 'j') color_frog[3] = 1;
 				if (ch == 'k') color_frog[3] = 2; if (ch == 'l') color_frog[3] = 3;
 			}
-			for (int i = 0; i < n_frog; i++) { 
+			
+			cooldown = now_ms();
+			if (now_ms() - time >= 300) {
+				ani_sw = true;
+				time = cooldown;
+			}
+			for (int i = 0; i < i_frog; i++) { 
 				int j = (i % 2 == 0) ? 0 ; 1
 					
 				// Change frog[i]'s color, animate L/R direction, choose frog[i]
 				frog_p->set_color_dir(color_frog[i], j, i); sleep_ms(100); 				
 				frog_p->set_color_dir(color_frog[i], j + 1, i); sleep_ms(100);
 				
-				frog_p->move_xy(frogx[x], bbnd / 2 + 20, i);
+				frog_p->move_xy(frogx[i], bbnd / 2 + 20, i);
 			}
 			
 			if (ch == ' ') break;
