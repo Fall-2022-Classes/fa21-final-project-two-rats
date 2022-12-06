@@ -27,11 +27,13 @@ If time, a new video core will be implemented: All-Star Mode, which makes it har
      - V2: On-Screen Display Text
      - V1: Main Frog Sprite
 
-2. __`vga_sprite_____core.sv`__: Wrapping circuit to interface the core with video system. Cores V1 & V3-V5 are nearly identical "Duplication Cores", allowing up to 20 sprites to be spawned on-screen at a time. Implemented by expanding the Register Map with a set of x0/y0-coordinate registers and a control register per sprite. Code was expanded with the aid of MATLAB.
+2. __`vga_sprite_____core.sv`__: Wrapping circuit to interface the core with video system. Cores V1 & V3-V5 are nearly identical "Duplication Cores", allowing up to 20 sprites to be spawned on-screen at a time via a single core, as opposed to one core per sprite. Implemented by expanding the Register Map with a set of x0/y0-coordinate registers and a control register per sprite. Code was expanded with the aid of MATLAB.
 
 3. __`_____src.sv`__: Core code for each sprite, where all have 2-bit control registers for changing the color of the sprite body and sprite select from the sprite sheet. Sprite data is read from `____ram_lut.sv`. Code for "Duplication Cores" also expanded with the aid of MATLAB.
 
 ### Driver
+
+1. __`vga_core.cpp`__: The DupliCore class was added to accomodate "Duplication Cores" V1 & V3-V5. Main functions are to change the x0/y0-coordinates, colors, and sprite-select of each independent sprite.
 
 ### Application
 
