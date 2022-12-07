@@ -153,13 +153,10 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 	int frogx[n_frog], frogy[n_frog];		 	// player 1 & player 2
 	int car[sc][2], log[sc][2], turtle[sc][2];	// 2D array[x][y]: x = # of sprites, y = coordinates
 	
-	int rate[sc][6];
 	int incr = 5;
-	int row[10] = {-incr, +incr + 2, -incr, +incr+9};
-	row[0] = -incr;
-	int row2 = +log_spd + 3;
-	int row3 = -log_spd - 7;
-
+	int t_row[6][2] = {[0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0]};
+	int row_rates[6] = {100, 60, 80, 30, 60, 45};
+	
 	// Ps2
 	char ch;
 	
@@ -250,6 +247,50 @@ void frogger (DupliCore *frog_p, DupliCore *car_p, DupliCore *log_p, DupliCore *
 			if (frogy < 350) water_arena = true;
 			else water_arena = false;
 		}
+		
+		
+		// x (10 pixels L/R) and y are pre-determined.
+		int cooldown = now_ms();
+		log_p->move(rate, cooldown, time, 0/1/2/3/4);
+		turtle_p->move(rate, cooldown, time, 0/1/2/3/4);
+		
+
+		
+		// lol what the fuck, how do I vary cooldown time??
+		// oh i know
+		unsigned int time_car;
+		unsigned int t_row[0][0] = now_ms();
+		if (t_row[0][0] - t_row[0][1] >= row_rates[0]) {
+			for (int i = 0; i < 4; i++) {
+				car[i][0] += incr;
+				car_p->move_xy(car[i][0], car[i][1], i);
+			}
+			
+			t_row[0][1] = t_row[0][0];
+		}		
+		
+		if (t_row[1][0] - t_row[1][1] >= row_rates[1]) {
+			for (int i = 4*1; i < 4*(1+1); i++) {
+				car[i][0] += incr;
+				car_p->move_xy(car[i][0], car[i][1], i);
+			}
+			
+			t_row[1][1] = t_row[1][0];
+		}			
+		
+		if (t_row[i][0] - t_row[i][1] >= row_rates[i]) {
+			for (int j = 4*i; j < 4*(i+i); j++) {
+				car[j][0] += incr;
+				car_p->move_xy(car[j][0], car[j][1], j);
+			}
+			
+			t_row[i][1] = t_row[i][0];
+		}	
+			// WAIT WAIT WAIT WAIT I WANT DIFFERENT COOLDOWN, NOT INCREMENT RATE
+			
+		if (cooldown - time >= 100) {}
+		
+		
 		
 		
 //		if (now_ms() - time >= speed)
